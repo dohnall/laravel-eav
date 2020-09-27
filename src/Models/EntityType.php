@@ -9,8 +9,7 @@ class EntityType extends Model
     protected $table = 'eav_entity_types';
     protected $guarded = [];
 
-    public function attributes()
-    {
+    public function attributes() {
         return $this->hasMany(Attribute::class);
     }
 }
