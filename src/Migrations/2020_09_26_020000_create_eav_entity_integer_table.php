@@ -19,14 +19,13 @@ class CreateEavEntityIntegerTable extends Migration
             $table->collation = 'utf8_general_ci';
 
             $table->bigIncrements('id');
-            $table->char('locale', 5)->default('en_US')->index();
-            $table->unsignedBigInteger('entity_type_id')->index();
+            $table->unsignedBigInteger('lang_id')->default(1)->index();
             $table->unsignedBigInteger('attribute_id')->index();
             $table->unsignedBigInteger('entity_id')->index();
             $table->bigInteger('value')->default(0);
 
-            $table->foreign('entity_type_id')->references('id')->on('eav_entity_types')->onDelete('cascade');
             $table->foreign('attribute_id')->references('id')->on('eav_attributes')->onDelete('cascade');
+            $table->foreign('lang_id')->references('id')->on('eav_languages')->onDelete('cascade');
         });
     }
 

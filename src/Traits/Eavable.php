@@ -3,10 +3,10 @@ namespace Dohnall\LaravelEav\Traits;
 
 use Dohnall\LaravelEav\Models\Attribute;
 use Dohnall\LaravelEav\Models\EntityType;
-use Dohnall\LaravelEav\Models\Option;
 
 trait Eavable {
     public $entityAttributes = [];
+    public $entityAttributesToSave = [];
 
     public function getAttributes() {
         parent::getAttributes();
@@ -18,6 +18,32 @@ trait Eavable {
 
     public function getAttribute($key) {
         return $this->isEntityAttribute($key) ? $this->getEntityAttribute($key) : parent::getAttribute($key);
+    }
+
+    public function setAttribute($key, $value) {
+        return $this->isEntityAttribute($key) ? $this->setEntityAttribute($key, $value) : parent::setAttribute($key, $value);
+    }
+
+    public function save(array $options = []) {
+        parent::save($options);
+
+        $entityType = $this->getEntityType();
+        foreach($this->entityAttributesToSave as $key => $value) {
+            $attribute = Attribute::where(['entity_type_id' => $entityType->id, 'slug' => $key])->first();
+            $model = ucfirst($attribute->input_type);
+            $attributeValue = app('Dohnall\\LaravelEav\\Models\\Types\\'.$model);
+            $attributeValue->saveEntityAttribute($attribute->id, $this->id, self::$lang_id, $value, $this->$key);
+        }
+    }
+
+    public function delete() {
+        foreach($this->entityAttributes as $key => $attribute) {
+            $model = ucfirst($attribute->input_type);
+            $attributeValue = app('Dohnall\\LaravelEav\\Models\\Types\\'.$model);
+            $attributeValue->deleteEntityAttribute($attribute->id, $this->id);
+        }
+
+        parent::delete();
     }
 
     protected function getEntityType() {
@@ -34,33 +60,19 @@ trait Eavable {
         return $this->getEntityAttributeValue($attribute);
     }
 
+    protected function setEntityAttribute($key, $value) {
+        $this->entityAttributesToSave[$key] = $value;
+        return $this;
+    }
+
     protected function getEntityAttributeValue(Attribute $attribute) {
+        $model = ucfirst($attribute->input_type);
+        $value = app('Dohnall\\LaravelEav\\Models\\Types\\'.$model);
+
         if($attribute->collection) {
-            if($attribute->input_type == 'integer') {
-                $options = Option::where('attribute_id', $attribute->id)->whereIn('id', $attribute->values()->where(['entity_id' => $this->id])->get()->pluck('value')->toArray())->get();
-                if(count($options) > 0) {
-                    $return = [];
-                    foreach($options as $row) {
-                        $return[] = $row->value()->where(['locale' => 'en_US'])->first();
-                    }
-                    return $return;
-                } else {
-                    return $attribute->values()->where(['entity_id' => $this->id])->get()->pluck('value', 'id')->toArray();
-                }
-            } else {
-                return $attribute->values()->where(['entity_id' => $this->id])->get()->pluck('value', 'id')->toArray();
-            }
+            return $value->getValues($attribute->id, $this->id, self::$lang_id);
         } else {
-            if($attribute->input_type == 'integer') {
-                $options = Option::where(['attribute_id' => $attribute->id, 'id' => $attribute->values()->where(['entity_id' => $this->id])->first()->value])->first();
-                if($options) {
-                    return $options->value()->where(['locale' => 'en_US'])->first();
-                } else {
-                    return $attribute->values()->where(['entity_id' => $this->id])->first()->value;
-                }
-            } else {
-                return $attribute->values()->where(['entity_id' => $this->id])->first()->value;
-            }
+            return $value->getValue($attribute->id, $this->id, self::$lang_id);
         }
     }
 }

@@ -20,10 +20,11 @@ class CreateEavAttributeOptionValuesTable extends Migration
 
             $table->bigIncrements('id');
             $table->unsignedBigInteger('option_id')->index();
-            $table->char('locale', 5)->default('en_US')->index();
+            $table->unsignedBigInteger('lang_id')->default(1)->index();
             $table->string('value')->nullable();
 
             $table->foreign('option_id')->references('id')->on('eav_attribute_options')->onDelete('cascade');
+            $table->foreign('lang_id')->references('id')->on('eav_languages')->onDelete('cascade');
         });
     }
 

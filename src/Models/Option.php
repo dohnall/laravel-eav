@@ -10,6 +10,6 @@ class Option extends Model
     protected $table = 'eav_attribute_options';
 
     public function value() {
-        return $this->hasOne(OptionValue::class, 'option_id', 'id');
+        return $this->hasMany(OptionValue::class, 'option_id', 'id');
     }
 }
