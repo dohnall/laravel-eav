@@ -3,6 +3,7 @@ namespace Dohnall\LaravelEav\Traits;
 
 use Dohnall\LaravelEav\Models\Attribute;
 use Dohnall\LaravelEav\Models\EntityType;
+use Illuminate\Support\Facades\Cache;
 
 trait Eavable {
     public $entityAttributes = [];
@@ -33,6 +34,7 @@ trait Eavable {
             $model = ucfirst($attribute->input_type);
             $attributeValue = app('Dohnall\\LaravelEav\\Models\\Types\\'.$model);
             $attributeValue->saveEntityAttribute($attribute->id, $this->id, self::$lang_id, $value, $this->$key);
+            $this->forget($attribute->id, $this->id, self::$lang_id);
         }
     }
 
@@ -41,9 +43,14 @@ trait Eavable {
             $model = ucfirst($attribute->input_type);
             $attributeValue = app('Dohnall\\LaravelEav\\Models\\Types\\'.$model);
             $attributeValue->deleteEntityAttribute($attribute->id, $this->id);
+            $this->forget($attribute->id, $this->id, self::$lang_id);
         }
 
         parent::delete();
+    }
+
+    public function setEntityLanguage($lang_id) {
+        self::$lang_id = $lang_id;
     }
 
     protected function getEntityType() {
@@ -66,13 +73,24 @@ trait Eavable {
     }
 
     protected function getEntityAttributeValue(Attribute $attribute) {
-        $model = ucfirst($attribute->input_type);
-        $value = app('Dohnall\\LaravelEav\\Models\\Types\\'.$model);
+        $value = Cache::rememberForever($this->getCacheString($attribute->id, $this->id, self::$lang_id), function() use ($attribute) {
+            $model = ucfirst($attribute->input_type);
+            $value = app('Dohnall\\LaravelEav\\Models\\Types\\' . $model);
 
-        if($attribute->collection) {
-            return $value->getValues($attribute->id, $this->id, self::$lang_id);
-        } else {
-            return $value->getValue($attribute->id, $this->id, self::$lang_id);
-        }
+            if ($attribute->collection) {
+                return $value->getValues($attribute->id, $this->id, self::$lang_id);
+            } else {
+                return $value->getValue($attribute->id, $this->id, self::$lang_id);
+            }
+        });
+        return $value;
+    }
+
+    protected function forget($attributeId, $entityId, $langId) {
+        Cache::forget($this->getCacheString($attributeId, $entityId, $langId));
+    }
+
+    protected function getCacheString($attributeId, $entityId, $langId) {
+        return 'eav:'.$attributeId.':'.$entityId.':'.$langId;
     }
 }

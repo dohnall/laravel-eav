@@ -24,6 +24,7 @@ class CreateEavLanguagesTable extends Migration
             $table->string('name')->nullable();
             $table->string('code')->unique();
             $table->string('locale')->unique();
+            $table->enum('default', [0, 1])->default(0);
             $table->timestamps();
         });
 
@@ -31,6 +32,7 @@ class CreateEavLanguagesTable extends Migration
             'name' => 'English',
             'code' => 'en',
             'locale' => 'en_US',
+            'default' => 1,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
