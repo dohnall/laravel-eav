@@ -16,19 +16,16 @@
     "require-dev": {
 
     },
-    "config": {
-        "optimize-autoloader": true,
-        "preferred-install": "dist",
-        "sort-packages": true
-    },
     "autoload": {
         "psr-4": {
             "Dohnall\\LaravelEav\\": "src/"
         }
     },
-    "minimum-stability": "dev",
-    "prefer-stable": true,
-    "scripts": {
-
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Dohnall\\LaravelEav\\LaravelEavServiceProvider"
+            ]
+        }
     }
 }
