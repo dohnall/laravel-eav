@@ -12,7 +12,7 @@ class LaravelEavServiceProvider extends ServiceProvider
      * @var bool
      */
     protected $commands = [
-
+        'Dohnall\LaravelEav\Commands\EavTest',
     ];
 
     /**
