@@ -11,8 +11,11 @@ trait Eavable {
 
     public function getAttributes() {
         parent::getAttributes();
-        foreach($this->getEntityType()->attributes()->get() as $attribute) {
-            $this->entityAttributes[$attribute->slug] = $attribute;
+        $entityType = $this->getEntityType();
+        if($entityType) {
+            foreach($entityType->attributes()->get() as $attribute) {
+                $this->entityAttributes[$attribute->slug] = $attribute;
+            }
         }
         return $this->attributes;
     }
